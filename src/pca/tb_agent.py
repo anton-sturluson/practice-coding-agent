@@ -27,7 +27,7 @@ class TbAgent(BaseAgent):
 
         logger.info(f"Starting task:\n{instruction}")
 
-        client: BaseLLMClient = AnthropicClient(model="claude-sonnet-4-5")
+        client: BaseLLMClient = AnthropicClient(model="claude-haiku-4-5")
         agent: AgenticWorkflow = AgenticWorkflow(client=client, logger=logger)
 
         session.start()

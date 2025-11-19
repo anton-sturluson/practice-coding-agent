@@ -12,7 +12,7 @@ class AnthropicClient(BaseLLMClient):
         self,
         model: str = "claude-sonnet-4-5",
         api_key: str | None = None,
-        max_tokens: int = 16_384,
+        max_tokens: int = 65_536,
     ) -> None:
         self.model: str = model
         self.max_tokens: int = max_tokens
@@ -23,7 +23,7 @@ class AnthropicClient(BaseLLMClient):
     async def call(
         self,
         messages: list[Message],
-        cache_system: bool = True,
+        enable_caching: bool = True,
         temperature: float = 1.0,
         **kwargs: Any,
     ) -> LLMResponse:
@@ -35,24 +35,36 @@ class AnthropicClient(BaseLLMClient):
         system_content: list[dict[str, Any]] | None = None
         if system_messages:
             system_content = []
-            for msg in system_messages:
+            for i, msg in enumerate(system_messages):
                 block: dict[str, Any] = {
                     "type": "text",
                     "text": msg.content,
                 }
-                if cache_system:
+                if enable_caching and i == len(system_messages) - 1:
                     block["cache_control"] = {"type": "ephemeral"}
                 system_content.append(block)
 
-        anthropic_messages: list[dict[str, str]] = [
-            {"role": m.role, "content": m.content} for m in conversation_messages
-        ]
+        messages: list[dict[str, Any]] = []
+        for i, msg in enumerate(conversation_messages):
+            is_last_message = i == len(conversation_messages) - 1
+
+            content_blocks: list[dict[str, Any]] = [
+                {"type": "text", "text": msg.content}
+            ]
+
+            if is_last_message and enable_caching:
+                content_blocks[-1]["cache_control"] = {"type": "ephemeral"}
+
+            messages.append({
+                "role": msg.role,
+                "content": content_blocks
+            })
 
         response: AnthropicMessage = await self.client.messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
             system=system_content,
-            messages=anthropic_messages,
+            messages=messages,
             temperature=temperature,
             **kwargs,
         )

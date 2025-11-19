@@ -111,8 +111,8 @@ class AgenticWorkflow:
             self.messages.append(
                 Message(
                     role="user",
-                    content=f"Prasing error: {response.content}. Bash command must "
-                    "be enclosed in triple backticks bash block."
+                    content=f"Prasing error. Bash command must be enclosed in "
+                    "triple backticks bash block."
                 )
             )
 
